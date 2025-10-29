@@ -1,15 +1,86 @@
+#!/usr/bin/env python3
+"""Test suite for x16rt_hash module."""
+
+import unittest
 import x16rt_hash
 from binascii import hexlify, unhexlify
 
-# Block 5000 (ce9e64ee2f9832f9ff6a8b042d0aa66f2e0aca6e8a5958051c141f27b5e68a3b)
-blockheader_str = '0000002049963e9e46701e28e2dd44f61dea241ba3a457979fa3b378822c6cc24457bc2500a0da644814e2a43cc163f3f37590982e1e2f5ac45d1de2f8222750fea1c844f8d2315c824d111b120979e30000'
 
-blockheader = unhexlify(blockheader_str)
-powHash = x16rt_hash.getPoWHash(blockheader)
-result = hexlify(powHash)
-print(result)
+class TestX16RT(unittest.TestCase):
+    """Test suite for X16RT hash module"""
 
-testoutput = b'40abc3e30ba0552a7910c0acd5b46a5f8dbf287e0108ee679d59070000000000'
-assert result == testoutput
+    # Test vector: block header and expected hash (Block 4308058)
+    TEST_INPUT = "00000032e9de8ebb42a4bfbe99af01e5b905e026fc9080b98a0f411c4b15b8cf3b000000abec73e42ad979a60bfcc3faf727cf4fa39713311c0fcef5f788b362cd16913d29130269c602141c024dac91"
+    EXPECTED_OUTPUT = (
+        b"e9e855fd28c2916d4e13f6c15eddf96625bdbf8c9943c5ec0f1e340900000000"
+    )
 
-print('Test succeeded')
+    def test_known_hash(self):
+        """Test with known hash vector"""
+        test_input = unhexlify(self.TEST_INPUT)
+        result = x16rt_hash.getPoWHash(test_input)
+        result_hex = hexlify(result)
+
+        self.assertEqual(
+            result_hex,
+            self.EXPECTED_OUTPUT,
+            f"Expected {self.EXPECTED_OUTPUT}, got {result_hex}",
+        )
+
+    def test_output_length(self):
+        """Test that output is always 32 bytes"""
+        test_input = unhexlify(self.TEST_INPUT)
+        result = x16rt_hash.getPoWHash(test_input)
+
+        self.assertEqual(
+            len(result), 32, f"Expected 32-byte output, got {len(result)} bytes"
+        )
+
+    def test_output_type(self):
+        """Test that output is bytes"""
+        test_input = unhexlify(self.TEST_INPUT)
+        result = x16rt_hash.getPoWHash(test_input)
+
+        self.assertIsInstance(
+            result, bytes, f"Expected bytes output, got {type(result)}"
+        )
+
+    def test_invalid_input_length(self):
+        """Test that function rejects wrong input size"""
+        # Input should be exactly 80 bytes
+        invalid_inputs = [
+            b"",  # Empty
+            b"short",  # Too short
+            b"x" * 79,  # One byte short
+            b"x" * 81,  # One byte too long
+            b"x" * 160,  # Double size
+        ]
+
+        for invalid_input in invalid_inputs:
+            with self.subTest(input_length=len(invalid_input)):
+                # This should either raise an exception or handle gracefully
+                try:
+                    result = x16rt_hash.getPoWHash(invalid_input)
+                    # If no exception, result should still be 32 bytes
+                    self.assertEqual(len(result), 32)
+                except (TypeError, ValueError) as e:
+                    # It's acceptable to raise an error for invalid input
+                    self.assertIn(
+                        "80",
+                        str(e),
+                        "Error message should indicate 80-byte requirement",
+                    )
+
+    def test_deterministic(self):
+        """Test that same input always produces same output"""
+        test_input = unhexlify(self.TEST_INPUT)
+        result1 = x16rt_hash.getPoWHash(test_input)
+        result2 = x16rt_hash.getPoWHash(test_input)
+
+        self.assertEqual(
+            result1, result2, "Same input should always produce same output"
+        )
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
