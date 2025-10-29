@@ -34,7 +34,7 @@ x16rt_hash_module = Extension(
 
 setup(
     name="avian_x16rt_hash",
-    version="0.2.0",
+    version="1.1.0",
     description="Python 3 bindings for X16RT hashing PoW",
     long_description=long_description,
     long_description_content_type="text/markdown",
