@@ -36,4 +36,5 @@ Homepage = "https://github.com/AvianNetwork/x16rt_hash"
 "Source Code" = "https://github.com/AvianNetwork/x16rt_hash"
 
 [tool.setuptools]
-include-package-data = true
+py-modules = []
+packages = []
